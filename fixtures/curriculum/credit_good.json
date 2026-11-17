@@ -1,0 +1,5 @@
+[
+ {"event_id":"t-c1","op":"transcript","student_id":"student-1","source_course":"C1","year":2026,"credits":3,"grade":85,"issuer":"D","status":"passed","event_time":"2026-02-01T00:00:00Z"},
+ {"event_id":"t-x1","op":"transcript","student_id":"student-1","source_course":"X1","year":2026,"credits":3,"grade":90,"issuer":"D","status":"passed","event_time":"2026-02-01T00:00:00Z"},
+ {"event_id":"a-x1-c2","op":"agreement","source_course":"X1","target_course":"C2","valid_from":2025,"valid_until":2026,"min_credits":3,"category":"required","event_time":"2026-01-01T00:00:00Z"}
+]
