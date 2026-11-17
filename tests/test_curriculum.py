@@ -28,6 +28,14 @@ class CurriculumCases(unittest.TestCase):
         self.assertEqual(catalog.current(self.db,'C2',2026)['decision'],'disputed')
         self.assertEqual((r['graph']['decision'],r['qualification']['decision']),('frozen','pending'))
 
+    def test_catalog_credit_revision_reopens_equivalence(self):
+        self.good()
+        revised=dict(fixture('catalog_good.json')[2],event_id='c2-v2',version=2,credits=4,event_time='2026-02-10T00:00:00Z')
+        catalog.ingest(self.db,[revised])
+        r=report.decide(self.db,'student-1','C3',2026)
+        self.assertEqual((r['catalog']['decision'],r['graph']['decision']),('published','published'))
+        self.assertEqual((r['awards'][0]['reason'],r['qualification']['decision']),('insufficient_credits','ineligible'))
+
     def test_graph_cycle_independently_freezes_qualification(self):
         self.good();prereq.ingest(self.db,fixture('prereq_cycle.json'))
         r=report.decide(self.db,'student-1','C3',2026)
