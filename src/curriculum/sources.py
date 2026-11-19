@@ -1,8 +1,10 @@
 """Immutable source event capture."""
 import json,hashlib
 
+def canonical(obj):return json.dumps(obj,ensure_ascii=False,sort_keys=True,separators=(',',':'))
+
 def record(db,event,kind,object_id):
-    body=json.dumps(event,ensure_ascii=False,sort_keys=True,separators=(',',':'))
+    body=canonical(event)
     digest=hashlib.sha256(body.encode()).hexdigest();event_id=event['event_id']
     old=db.execute('SELECT sha256 FROM evidence WHERE event_id=?',(event_id,)).fetchone()
     if old:

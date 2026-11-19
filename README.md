@@ -26,6 +26,16 @@ python -m curriculum report --db data/demo.sqlite --student student-1 --course C
 
 目录账核院系权威、同号同版本学分争议和停开适用学年；图账独立检查 AND/OR 组合、缺课引用和环；学分账核来源成绩、协议有效期、目标学分、类别与重复抵扣。资格报告汇合三账，但目录发布、图发布和等效认定分别保留状态。
 
+## 分页导出批次
+
+院系按页导出的年度目录经 `import-export` 采录，一次导出可跨多个离线文件、按任意顺序到达：
+
+```powershell
+python -m curriculum import-export --db data/demo.sqlite --input export_batch.json
+```
+
+批次声明（`op=export_batch`）在入库时保存来源承诺类别：`kind=complete` 为覆盖某院系某学年全部课程的完整目录，`kind=patch` 为只声明所列修订的变更补丁。分页（`op=export_page`）携带页序号、页摘要 SHA-256 与课程条目。收齐裁定核对连续页号、页摘要、声明条数与跨页重复/冲突，全部通过才生效：完整批使前一已生效完整批中缺席的课程成为有来源依据的停开候选；补丁未列课程继续沿用旧证据；未收齐的批次不产生任何结论。批次版次参与既有同版争议裁定，冲突限定到受影响课程与学年；`op=source_revoke` 撤回来源凭据后按源事件重算当前目录，旧批证据与报告历史保留。
+
 ## 反例
 
 `catalog_conflict.json` 给 `C2` 同版号不同学分，冻结该课程与引用它的新先修图。`prereq_cycle.json` 构成 `C1→C3→C1`，即使目录仍有效，也冻结图。`credit_duplicate.json` 尝试用 `X1` 同时抵 `C2` 和 `C1`，后者拒绝。测试另覆盖等效撤销只改变学生资格、不改变图合法性；停开新学年不删除历史课程；同事件 ID 异载荷整批回滚。

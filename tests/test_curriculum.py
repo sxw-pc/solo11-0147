@@ -94,4 +94,147 @@ class CurriculumCases(unittest.TestCase):
         self.good();r=self.db.execute("SELECT category,decision FROM credit_award WHERE target_course='C2'").fetchone()
         self.assertEqual((r['category'],r['decision']),('required','awarded'))
 
+def entry(course,credits=3,status='open'):return {'course_id':course,'credits':credits,'status':status}
+
+def source_event(event_id='src-d',time='2026-01-01T00:00:00Z'):
+    return {'event_id':event_id,'op':'source','source_id':'dept-d','department':'D','valid_from':2025,'valid_until':2027,'event_time':time}
+
+def batch_decl(event_id,batch_id,kind='complete',version=1,year=2026,page_count=1,declared=1,source='dept-d',dept='D',time='2026-04-01T00:00:00Z'):
+    return {'event_id':event_id,'op':'export_batch','batch_id':batch_id,'source_id':source,'department':dept,'year':year,'kind':kind,'version':version,'page_count':page_count,'declared_courses':declared,'event_time':time}
+
+def batch_page(event_id,batch_id,page,courses,time='2026-04-02T00:00:00Z',digest=None):
+    return {'event_id':event_id,'op':'export_page','batch_id':batch_id,'page':page,'page_digest':digest or catalog.page_digest(courses),'courses':courses,'event_time':time}
+
+class ExportBatchCases(unittest.TestCase):
+    def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.db=connect(Path(self.tmp.name)/'test.sqlite')
+    def tearDown(self):self.db.close();self.tmp.cleanup()
+    def batch(self,batch_id):return dict(self.db.execute('SELECT * FROM export_batch WHERE batch_id=?',(batch_id,)).fetchone())
+    def full(self,batch_id,version,courses,**kw):
+        kw.setdefault('declared',len(courses))
+        return [batch_decl(f'decl-{batch_id}',batch_id,version=version,**kw),batch_page(f'page-{batch_id}-1',batch_id,1,courses)]
+
+    def test_complete_batch_absence_stops_course_but_patch_does_not(self):
+        catalog.ingest(self.db,[source_event()]+self.full('full-1',1,[entry('C1'),entry('C2'),entry('C3')]))
+        prereq.ingest(self.db,fixture('prereq_good.json'))
+        self.assertEqual(catalog.current(self.db,'C2',2026)['decision'],'published')
+        catalog.ingest(self.db,self.full('full-2',2,[entry('C1'),entry('C3')]))
+        gone=catalog.current(self.db,'C2',2026)
+        self.assertEqual((gone['decision'],gone['status'],gone['batch_id'],gone['page']),('stopped','stopped','full-2',None))
+        self.assertEqual(gone['origin_event'],'decl-full-2')
+        self.assertEqual(prereq.publish(self.db,2026)['decision'],'frozen')
+        r=report.decide(self.db,'student-1','C3',2026)
+        self.assertEqual((r['catalog']['batch_id'],r['catalog']['page'],r['catalog']['origin_event']),('full-2',1,'page-full-2-1'))
+        self.assertEqual((r['graph']['decision'],r['qualification']['decision']),('frozen','pending'))
+
+    def test_patch_leaves_unlisted_course_on_old_evidence(self):
+        catalog.ingest(self.db,[source_event()]+self.full('full-1',1,[entry('C1'),entry('C2'),entry('C3')]))
+        prereq.ingest(self.db,fixture('prereq_good.json'))
+        catalog.ingest(self.db,self.full('patch-1',2,[entry('C1',credits=4),entry('C3')],kind='patch'))
+        self.assertEqual(self.batch('patch-1')['state'],'complete')
+        kept=catalog.current(self.db,'C2',2026)
+        self.assertEqual((kept['decision'],kept['batch_id']),('published','full-1'))
+        self.assertEqual(catalog.current(self.db,'C1',2026)['credits'],4)
+        self.assertEqual(prereq.publish(self.db,2026)['decision'],'published')
+
+    def test_missing_pages_keep_batch_pending_until_supplied(self):
+        catalog.ingest(self.db,[source_event()]+self.full('full-1',1,[entry('C1'),entry('C2'),entry('C3')]))
+        catalog.ingest(self.db,[batch_decl('decl-full-2','full-2',version=2,page_count=2,declared=2),batch_page('page-full-2-1','full-2',1,[entry('C1')])])
+        b=self.batch('full-2')
+        self.assertEqual((b['state'],b['reason'],json.loads(b['detail'])['missing']),('pending','awaiting_pages',[2]))
+        self.assertEqual(catalog.current(self.db,'C2',2026)['decision'],'published')
+        catalog.ingest(self.db,[batch_page('page-full-2-2','full-2',2,[entry('C3')])])
+        self.assertEqual(self.batch('full-2')['state'],'complete')
+        self.assertEqual(catalog.current(self.db,'C2',2026)['decision'],'stopped')
+
+    def test_cross_page_duplicate_and_conflict_fail_batch(self):
+        catalog.ingest(self.db,[source_event(),
+            batch_decl('decl-dup','full-dup',page_count=2,declared=2),
+            batch_page('page-dup-1','full-dup',1,[entry('C1')]),batch_page('page-dup-2','full-dup',2,[entry('C1')]),
+            batch_decl('decl-clash','full-clash',page_count=2,declared=2),
+            batch_page('page-clash-1','full-clash',1,[entry('C2',credits=3)]),batch_page('page-clash-2','full-clash',2,[entry('C2',credits=4)])])
+        self.assertEqual(self.batch('full-dup')['reason'],'duplicate_course')
+        self.assertEqual(self.batch('full-clash')['reason'],'cross_page_conflict')
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'missing')
+        self.assertEqual(catalog.current(self.db,'C2',2026)['decision'],'missing')
+
+    def test_page_digest_and_declared_count_checks(self):
+        bad=batch_page('page-bad-1','full-bad',1,[entry('C1')],digest='0'*64)
+        catalog.ingest(self.db,[source_event(),batch_decl('decl-bad','full-bad',declared=1),bad,
+                                batch_decl('decl-short','full-short',declared=2),batch_page('page-short-1','full-short',1,[entry('C2')])])
+        self.assertEqual(self.batch('full-bad')['reason'],'page_digest_mismatch')
+        short=self.batch('full-short')
+        self.assertEqual((short['state'],short['reason']),('failed','count_mismatch'))
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'missing')
+
+    def test_export_source_authority_enforced(self):
+        catalog.ingest(self.db,[source_event(),
+            batch_decl('decl-unknown','full-unknown',source='unknown'),batch_page('page-unknown-1','full-unknown',1,[entry('C9')]),
+            batch_decl('decl-dept','full-dept',dept='E'),batch_page('page-dept-1','full-dept',1,[entry('C8')]),
+            batch_decl('decl-year','full-year',year=2030),batch_page('page-year-1','full-year',1,[entry('C7')])])
+        for course,year in (('C9',2026),('C8',2026),('C7',2030)):
+            self.assertEqual(catalog.current(self.db,course,year)['decision'],'untrusted')
+
+    def test_same_version_batches_dispute_only_affected_course(self):
+        catalog.ingest(self.db,[source_event()]
+            +self.full('full-a',1,[entry('C1',credits=3),entry('C2'),entry('C3')],declared=3)
+            +self.full('full-b',1,[entry('C1',credits=4),entry('C2'),entry('C3')],declared=3))
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'disputed')
+        self.assertEqual(catalog.current(self.db,'C2',2026)['decision'],'published')
+        self.assertEqual(catalog.current(self.db,'C3',2026)['decision'],'published')
+
+    def test_patch_and_complete_batch_opposite_status_disputes(self):
+        catalog.ingest(self.db,[source_event()]
+            +self.full('full-1',2,[entry('C1'),entry('C2')],declared=2)
+            +self.full('patch-1',2,[entry('C2',status='stopped')],kind='patch'))
+        self.assertEqual(catalog.current(self.db,'C2',2026)['decision'],'disputed')
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'published')
+
+    def test_later_higher_version_batch_recomputes_and_keeps_evidence(self):
+        catalog.ingest(self.db,[source_event()]
+            +self.full('full-a',1,[entry('C1',credits=3)],declared=1)
+            +self.full('full-b',1,[entry('C1',credits=4)],declared=1))
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'disputed')
+        catalog.ingest(self.db,self.full('full-c',2,[entry('C1',credits=3)]))
+        won=catalog.current(self.db,'C1',2026)
+        self.assertEqual((won['decision'],won['credits'],won['batch_id']),('published',3,'full-c'))
+        kept={r['event_id'] for r in self.db.execute("SELECT event_id FROM evidence WHERE kind LIKE 'export%'").fetchall()}
+        self.assertTrue({'decl-full-a','page-full-a-1','decl-full-b','page-full-b-1'}<=kept)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) c FROM batch_revision WHERE batch_id IN ('full-a','full-b')").fetchone()['c'],2)
+        report.decide(self.db,'student-1','C1',2026);report.decide(self.db,'student-1','C1',2026)
+        self.assertEqual(self.db.execute('SELECT COUNT(*) c FROM result_report').fetchone()['c'],2)
+
+    def test_idempotent_and_conflicting_retransmission(self):
+        events=[source_event()]+self.full('full-1',1,[entry('C1'),entry('C2')],declared=2)
+        first=catalog.ingest(self.db,events)
+        second=catalog.ingest(self.db,events)
+        self.assertEqual(second['imported'],0)
+        self.assertEqual(first['releases'],second['releases'])
+        third=catalog.ingest(self.db,[batch_page('page-full-1-1b','full-1',1,[entry('C1'),entry('C2')])])
+        self.assertEqual(third['imported'],1)
+        self.assertEqual(self.batch('full-1')['state'],'complete')
+        self.assertEqual(second['releases'],third['releases'])
+        catalog.ingest(self.db,[batch_page('page-full-1-1c','full-1',1,[entry('C1'),entry('C2',credits=5)])])
+        self.assertEqual(self.batch('full-1')['reason'],'page_conflict')
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'untrusted')
+
+    def test_source_revoke_recomputes_current_catalog(self):
+        catalog.ingest(self.db,[source_event()]+self.full('full-1',1,[entry('C1'),entry('C2')],declared=2))
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'published')
+        catalog.ingest(self.db,[{'event_id':'revoke-d','op':'source_revoke','source_id':'dept-d','event_time':'2026-05-01T00:00:00Z'}])
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'untrusted')
+        catalog.ingest(self.db,[source_event(event_id='src-d-2',time='2026-05-02T00:00:00Z')])
+        self.assertEqual(catalog.current(self.db,'C1',2026)['decision'],'published')
+
+    def test_cli_import_catalog_export_and_report(self):
+        from curriculum import __main__ as cli
+        dbpath=str(Path(self.tmp.name)/'cli.sqlite')
+        export=[source_event()]+self.full('full-1',1,[entry('C9')],declared=1)
+        export_file=Path(self.tmp.name)/'export.json';export_file.write_text(json.dumps(export),encoding='utf-8')
+        fixtures=ROOT/'fixtures'/'curriculum'
+        self.assertEqual(cli.main(['import-catalog','--db',dbpath,'--input',str(fixtures/'catalog_good.json')]),0)
+        self.assertEqual(cli.main(['import-export','--db',dbpath,'--input',str(export_file)]),0)
+        self.assertEqual(cli.main(['import-prereq','--db',dbpath,'--input',str(fixtures/'prereq_good.json')]),0)
+        self.assertEqual(cli.main(['import-credit','--db',dbpath,'--input',str(fixtures/'credit_good.json')]),0)
+        self.assertEqual(cli.main(['report','--db',dbpath,'--student','student-1','--course','C3','--year','2026']),0)
+
 if __name__=='__main__':unittest.main()
