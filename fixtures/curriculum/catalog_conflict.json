@@ -1,0 +1,3 @@
+[
+ {"event_id":"c2-conflict","op":"course","course_id":"C2","department":"D","source_id":"dept-d","year":2026,"version":1,"credits":4,"status":"open","event_time":"2026-01-03T00:00:00Z"}
+]
