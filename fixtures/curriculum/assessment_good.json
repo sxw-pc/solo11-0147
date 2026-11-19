@@ -1,0 +1,26 @@
+[
+  {
+    "event_id": "as-s1-lo1",
+    "op": "assessment",
+    "student_id": "student-1",
+    "course_id": "C3",
+    "year": 2026,
+    "objective_id": "LO-1",
+    "rubric_version": 1,
+    "score": 82,
+    "assessor": "teacher-A",
+    "event_time": "2026-05-01T00:00:00Z"
+  },
+  {
+    "event_id": "as-s1-lo2",
+    "op": "assessment",
+    "student_id": "student-1",
+    "course_id": "C3",
+    "year": 2026,
+    "objective_id": "LO-2",
+    "rubric_version": 1,
+    "score": 64,
+    "assessor": "teacher-A",
+    "event_time": "2026-05-01T00:00:00Z"
+  }
+]
