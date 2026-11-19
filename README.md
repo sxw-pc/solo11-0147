@@ -1,6 +1,6 @@
 # 高校课程目录先修采录台
 
-增强素材另有讲义节点采录入口：`python -m curriculum import-handout --db data/demo.sqlite --input fixtures/curriculum/handout_good.json`，以及 `python -m curriculum check-handout --db data/demo.sqlite --document C3-notes`。采录会保存脚注的 return_to，但当前检查只验证各节点有无可读标签，不检查键盘顺序、脚注返回或表格导航。合成样例故意把脚注返回写到 intro，便于后续核证。
+增强素材另有讲义节点采录入口：`python -m curriculum import-handout --db data/demo.sqlite --input fixtures/curriculum/handout_good.json`，以及 `python -m curriculum check-handout --db data/demo.sqlite --document C3-notes`。`trace-handout --document C3-notes --start intro --actions next,open,return` 会按目前写死的 return_to 返回 intro。check 仍只验证标签，未核对读屏服务是否能恢复原引用位置，也不处理嵌套引用或表格导航。
 
 面向教务培养方案维护员的离线合成数据工程。目录版次、先修图、跨院学分等效分别采录与裁定，再计算某学生对某学年课程的选课资格。它不管理教室、教师或课表换班。
 

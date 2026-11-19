@@ -24,6 +24,8 @@ class HandoutCases(unittest.TestCase):
         self.assertEqual(handout.ingest(self.db, data)['imported'], 1)
         self.assertEqual(navigation.check(self.db, 'C3-notes')['status'], 'ready')
         self.assertEqual(self.db.execute("SELECT return_to FROM handout_node WHERE node_id='note'").fetchone()[0], 'intro')
+        self.assertEqual(navigation.trace(self.db, 'C3-notes', 'intro', ['next','open','return'])['path'],
+                         ['intro', 'proof', 'note', 'intro'])
         self.assertEqual(handout.ingest(self.db, data)['imported'], 0)
         self.assertEqual(self.db.execute('SELECT COUNT(*) FROM handout_node').fetchone()[0], 4)
 
