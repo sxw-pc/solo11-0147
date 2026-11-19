@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS transcript_evidence(event_id TEXT PRIMARY KEY REFEREN
 CREATE TABLE IF NOT EXISTS equivalence_agreement(event_id TEXT PRIMARY KEY REFERENCES evidence(event_id),source_course TEXT NOT NULL,target_course TEXT NOT NULL,valid_from INTEGER NOT NULL,valid_until INTEGER NOT NULL,min_credits INTEGER NOT NULL,category TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS credit_award(student_id TEXT NOT NULL,target_course TEXT NOT NULL,year INTEGER NOT NULL,source_event TEXT NOT NULL REFERENCES evidence(event_id),decision TEXT NOT NULL,reason TEXT NOT NULL,category TEXT NOT NULL,PRIMARY KEY(student_id,target_course,year));
 CREATE TABLE IF NOT EXISTS result_report(id INTEGER PRIMARY KEY AUTOINCREMENT,student_id TEXT NOT NULL,year INTEGER NOT NULL,body TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS handout_node(doc_id TEXT NOT NULL,node_id TEXT NOT NULL,course_id TEXT NOT NULL,year INTEGER NOT NULL,kind TEXT NOT NULL,label TEXT NOT NULL,next_id TEXT,link_target TEXT,source_event TEXT NOT NULL REFERENCES evidence(event_id),PRIMARY KEY(doc_id,node_id));
+CREATE TABLE IF NOT EXISTS handout_case(doc_id TEXT PRIMARY KEY,status TEXT NOT NULL,reason TEXT NOT NULL,node_count INTEGER NOT NULL,source_event TEXT NOT NULL REFERENCES evidence(event_id));
 """
 
 def connect(path):
