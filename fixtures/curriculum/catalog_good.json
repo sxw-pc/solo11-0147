@@ -1,0 +1,6 @@
+[
+ {"event_id":"src-d","op":"source","source_id":"dept-d","department":"D","valid_from":2025,"valid_until":2027,"event_time":"2026-01-01T00:00:00Z"},
+ {"event_id":"c1","op":"course","course_id":"C1","department":"D","source_id":"dept-d","year":2026,"version":1,"credits":3,"status":"open","event_time":"2026-01-02T00:00:00Z"},
+ {"event_id":"c2","op":"course","course_id":"C2","department":"D","source_id":"dept-d","year":2026,"version":1,"credits":3,"status":"open","event_time":"2026-01-02T00:00:00Z"},
+ {"event_id":"c3","op":"course","course_id":"C3","department":"D","source_id":"dept-d","year":2026,"version":1,"credits":3,"status":"open","event_time":"2026-01-02T00:00:00Z"}
+]

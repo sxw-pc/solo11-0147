@@ -1,0 +1,3 @@
+[
+ {"event_id":"r-c1","op":"rule","target_course":"C1","year":2026,"rule":{"all":["C3"],"any":[]},"event_time":"2026-01-04T00:00:00Z"}
+]
