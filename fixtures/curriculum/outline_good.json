@@ -1,0 +1,28 @@
+[
+  {
+    "event_id": "o-c3-v1",
+    "op": "outline",
+    "course_id": "C3",
+    "year": 2026,
+    "version": 1,
+    "issuer": "D",
+    "event_time": "2026-01-03T00:00:00Z",
+    "objectives": [
+      {
+        "id": "LO-1",
+        "text": "能够设计关系模型",
+        "mandatory": true
+      },
+      {
+        "id": "LO-2",
+        "text": "能够评估数据来源质量",
+        "mandatory": true
+      },
+      {
+        "id": "LO-3",
+        "text": "能够编写采集计划",
+        "mandatory": false
+      }
+    ]
+  }
+]
