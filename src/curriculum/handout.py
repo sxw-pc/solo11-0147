@@ -16,9 +16,10 @@ def ingest(db, events):
                 raise ValueError('unique handout nodes required')
             db.execute('DELETE FROM handout_node WHERE doc_id=?', (doc_id,))
             for n in nodes:
-                db.execute('INSERT INTO handout_node VALUES (?,?,?,?,?,?,?,?,?)',
+                db.execute('INSERT INTO handout_node VALUES (?,?,?,?,?,?,?,?,?,?)',
                     (doc_id, n['id'], event['course_id'], event['year'], n['kind'],
-                     n.get('label', ''), n.get('next_id'), n.get('link_target'), event['event_id']))
+                     n.get('label', ''), n.get('next_id'), n.get('link_target'),
+                     n.get('return_to'), event['event_id']))
             db.execute('DELETE FROM handout_case WHERE doc_id=?', (doc_id,))
             imported += 1
     return {'imported': imported}
