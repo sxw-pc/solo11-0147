@@ -1,0 +1,22 @@
+[
+  {
+    "event_id": "s-c9-m",
+    "op": "succession",
+    "course_id": "C9",
+    "old_outline_event": "o-c9-2026",
+    "new_outline_event": "o-c9-2027",
+    "old_objective_id": "M",
+    "event_time": "2027-01-10T00:00:00Z",
+    "signers": [
+      {"signer": "reviewer-a", "decision": "approved", "signed_at": "2027-01-10T00:00:00Z"},
+      {"signer": "reviewer-b", "decision": "approved", "signed_at": "2027-01-11T00:00:00Z"}
+    ],
+    "claims": [
+      {
+        "new_objective_id": "N1",
+        "covered_subrequirements": ["建模", "质量评估"],
+        "note": "N1 实质承继 M 的两项必要子要求"
+      }
+    ]
+  }
+]

@@ -22,7 +22,12 @@ def ingest(db,events):
             else:raise ValueError(f'unknown catalog op {op}')
         for r in rows(db,'SELECT DISTINCT course_id,year FROM course_revision'):
             release(db,r['course_id'],r['year'])
-    return {'imported':count,'releases':rows(db,'SELECT * FROM catalog_release')}
+        # Catalog publication decides which new outline year is eligible for
+        # attestation; stopping a new academic year forces affected cases to
+        # pending review while old-year cases remain on record.
+        from . import attestation
+        attestation.reverify_all(db)
+    return {'imported':count,'releases':rows(db,'SELECT * FROM catalog_release'),'cases':rows(db,'SELECT * FROM attestation_case')}
 
 
 def release(db,course_id,year):

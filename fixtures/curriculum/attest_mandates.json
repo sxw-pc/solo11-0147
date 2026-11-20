@@ -1,0 +1,22 @@
+[
+  {
+    "event_id": "m-c9-continuation",
+    "op": "mandate",
+    "mandate_id": "mandate-c9-continuation",
+    "course_id": "C9",
+    "kind": "continuation",
+    "old_outline_event": "o-c9-2026",
+    "new_outline_event": "o-c9-2027",
+    "event_time": "2027-01-20T00:00:00Z"
+  },
+  {
+    "event_id": "m-c9-substitution",
+    "op": "mandate",
+    "mandate_id": "mandate-c9-substitution",
+    "course_id": "C9",
+    "kind": "substitution",
+    "old_outline_event": "o-c9-2026",
+    "new_outline_event": "o-c9-2027",
+    "event_time": "2027-01-20T00:00:00Z"
+  }
+]

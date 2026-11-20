@@ -2,14 +2,21 @@
 import json
 from .sources import record
 from .store import rows
-from . import catalog
+from . import catalog, attestation
 
 
 def ingest(db, events):
     count = 0
     with db:
         for event in events:
-            if event.get("op") != "outline":
+            op = event.get("op")
+            if op == "succession" or op == "mandate":
+                # Cross-version succession statements and review mandates are
+                # captured by the attestation ledger but imported through the
+                # same outline ingestion entry point.
+                count += attestation.record_events(db, [event])
+                continue
+            if op != "outline":
                 raise ValueError("outline input must be outline")
             objectives = event["objectives"]
             if not objectives or len({x["id"] for x in objectives}) != len(objectives):
@@ -34,7 +41,14 @@ def ingest(db, events):
                 count += 1
         for key in rows(db, "SELECT DISTINCT course_id,year FROM outline_revision"):
             release(db, key["course_id"], key["year"])
-    return {"imported": count, "outlines": rows(db, "SELECT * FROM outline_release")}
+        # New outline versions change the eligible objective set, so every
+        # mandate pointing at the affected course must be re-evaluated.
+        attestation.reverify_all(db)
+    return {
+        "imported": count,
+        "outlines": rows(db, "SELECT * FROM outline_release"),
+        "cases": rows(db, "SELECT * FROM attestation_case"),
+    }
 
 
 def release(db, course_id, year):

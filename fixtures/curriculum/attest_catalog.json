@@ -1,0 +1,5 @@
+[
+ {"event_id":"src-d9","op":"source","source_id":"dept-d9","department":"D9","valid_from":2025,"valid_until":2028,"event_time":"2026-01-01T00:00:00Z"},
+ {"event_id":"c9-2026","op":"course","course_id":"C9","department":"D9","source_id":"dept-d9","year":2026,"version":1,"credits":3,"status":"open","event_time":"2026-01-02T00:00:00Z"},
+ {"event_id":"c9-2027","op":"course","course_id":"C9","department":"D9","source_id":"dept-d9","year":2027,"version":1,"credits":3,"status":"open","event_time":"2027-01-02T00:00:00Z"}
+]

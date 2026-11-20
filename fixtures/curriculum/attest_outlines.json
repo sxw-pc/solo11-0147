@@ -1,0 +1,30 @@
+[
+  {
+    "event_id": "o-c9-2026",
+    "op": "outline",
+    "course_id": "C9",
+    "year": 2026,
+    "version": 1,
+    "issuer": "D9",
+    "event_time": "2026-01-03T00:00:00Z",
+    "objectives": [
+      {"id": "M", "text": "必修学习成果：建模与质量评估", "mandatory": true,
+       "subrequirements": ["建模", "质量评估"]},
+      {"id": "E", "text": "选修学习成果：跨专业采集实践", "mandatory": false,
+       "subrequirements": ["采集实践"]}
+    ]
+  },
+  {
+    "event_id": "o-c9-2027",
+    "op": "outline",
+    "course_id": "C9",
+    "year": 2027,
+    "version": 1,
+    "issuer": "D9",
+    "event_time": "2027-01-03T00:00:00Z",
+    "objectives": [
+      {"id": "N1", "text": "新版目标：建模能力与数据质量评估", "mandatory": true},
+      {"id": "N2", "text": "新版目标：治理合规", "mandatory": false}
+    ]
+  }
+]
