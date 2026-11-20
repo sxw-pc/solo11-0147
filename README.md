@@ -1,8 +1,13 @@
 # 高校课程目录先修采录台
 
-增强素材另有讲义节点采录入口：`python -m curriculum import-handout --db data/demo.sqlite --input fixtures/curriculum/handout_good.json`，以及 `python -m curriculum check-handout --db data/demo.sqlite --document C3-notes`。`trace-handout --document C3-notes --start intro --actions next,open,return` 会按目前写死的 return_to 返回 intro。check 仍只验证标签，未核对读屏服务是否能恢复原引用位置，也不处理嵌套引用或表格导航。
+讲义采录入口：`python -m curriculum import-handout --db data/demo.sqlite --input fixtures/curriculum/handout_good.json`。每个事件是一版作者签发的讲义：节点带角色（text/footnote/formula/table_head/table_cell）、表格行列头和可选标记；引用边（open、`branch:*`、鼠标专用 pointer）各自保存目标与返回锚点，同一脚注从两处引用时两条边可有不同的 `return_to`。`check-handout --document C3-notes` 不再只数空标签，而是分别核定两份扫描前固定的合同：
 
-面向教务培养方案维护员的离线合成数据工程。目录版次、先修图、跨院学分等效分别采录与裁定，再计算某学生对某学年课程的选课资格。它不管理教室、教师或课表换班。
+- `linear_reading`（线性朗读）：从签发起点沿 `next_id` 主线到终点，覆盖全部必读节点，每个表格单元保留行列标题语境；明确 `optional` 的脚注可跳过。
+- `interactive_reading`（交互阅读）：另要求每个键盘可打开的引用都能打开、嵌套引用后进先出、公式两个合法分支都能返回主线、没有只靠鼠标可达的孤岛节点。
+
+导航机是有状态的：焦点之外还保存引用点帧栈（进入处、所在表格行列头、签发返回锚点）和各层上一项历史。`trace-handout --document C3-notes --start intro --actions next,open,return` 逐动作回放，硬失败（无键盘动作、断链、无帧可返回）抛错，错误返回落点记录在 `violations` 中并附可复现动作序列、出错焦点和签发版本；加 `--revision <event_id>` 可重放任意旧版。`fixtures/curriculum/handout_good.json` 是四节点反例：note 的返回锚点误指向 intro，线性合同可交付、交互合同 blocked；`handout_revised.json` 是补正版，覆盖同脚注双入口、嵌套 LIFO、表格表头、公式双分支，两份合同均可交付。旧失败见证写入 `handout_decision` 且不被覆盖，原始事件留在 `evidence`，同事件 ID 异内容仍拒绝写入。
+
+面向教务培养方案维护员的离线合成数据工程。目录版次、先修图、跨院学分等效分别采录与裁定，再计算某学生对某学年课程的选课资格。它不管理教室、教师或课表换班。学生选课资格只取决于目录、先修图和学分三账；讲义导航交付结果在报告的 `handout_delivery` 键下单独呈现，任何讲义版次都不改变资格结论，也不比较作业或字幕原文字句。
 
 ## 快速运行
 

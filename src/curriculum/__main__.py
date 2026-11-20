@@ -8,7 +8,8 @@ def main(argv=None):
     for name in ('init','import-catalog','import-prereq','import-credit','import-handout','check-handout','trace-handout','report','demo'):
         q=sp.add_parser(name);q.add_argument('--db',default='data/demo.sqlite')
         if name.startswith('import-'):q.add_argument('--input',required=True)
-        if name in ('check-handout','trace-handout'):q.add_argument('--document',required=True)
+        if name in ('check-handout','trace-handout'):
+            q.add_argument('--document',required=True);q.add_argument('--revision',default=None)
         if name=='trace-handout':q.add_argument('--start',required=True);q.add_argument('--actions',required=True)
         if name=='report':q.add_argument('--student',required=True);q.add_argument('--course',required=True);q.add_argument('--year',type=int,required=True)
     a=p.parse_args(argv);db=connect(a.db)
@@ -17,8 +18,8 @@ def main(argv=None):
         elif a.command.startswith('import-'):
             items=json.loads(Path(a.input).read_text(encoding='utf-8'))
             result={'import-catalog':catalog,'import-prereq':prereq,'import-credit':credit,'import-handout':handout}[a.command].ingest(db,items)
-        elif a.command=='check-handout':result=navigation.check(db,a.document)
-        elif a.command=='trace-handout':result=navigation.trace(db,a.document,a.start,a.actions.split(','))
+        elif a.command=='check-handout':result=navigation.check(db,a.document,source_event=a.revision)
+        elif a.command=='trace-handout':result=navigation.trace(db,a.document,a.start,a.actions.split(','),source_event=a.revision)
         elif a.command=='report':result=report.decide(db,a.student,a.course,a.year)
         else:
             root=Path(__file__).resolve().parents[2]

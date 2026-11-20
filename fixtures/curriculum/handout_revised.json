@@ -1,0 +1,24 @@
+[{"event_id": "handout-2", "event_time": "2026-02-01T09:00:00", "doc_id": "C3-notes", "course_id": "C3", "year": 2026, "start_id": "intro",
+  "nodes": [
+    {"id": "intro", "kind": "text", "label": "Introduction", "next_id": "proof"},
+    {"id": "proof", "kind": "text", "label": "Proof", "next_id": "formula",
+     "links": [{"action": "open", "target": "note", "return_to": "formula"}]},
+    {"id": "formula", "kind": "formula", "label": "Branch formula", "next_id": "tbl-head",
+     "links": [
+       {"action": "branch:alpha", "target": "branch-a", "return_to": "tbl-head"},
+       {"action": "branch:beta", "target": "branch-b", "return_to": "tbl-head"}]},
+    {"id": "tbl-head", "kind": "table_head", "label": "Result table", "table_id": "tbl-1",
+     "row_header": "Case", "col_header": "Outcome", "next_id": "cell-1"},
+    {"id": "cell-1", "kind": "table_cell", "label": "First case cell", "table_id": "tbl-1",
+     "row_header": "Case one", "col_header": "Outcome A", "next_id": "cell-2",
+     "links": [{"action": "open", "target": "note", "return_to": "cell-2"}]},
+    {"id": "cell-2", "kind": "table_cell", "label": "Second case cell", "table_id": "tbl-1",
+     "row_header": "Case two", "col_header": "Outcome B", "next_id": "end",
+     "links": [{"action": "open", "target": "note-2", "return_to": "end"}]},
+    {"id": "end", "kind": "text", "label": "End"},
+    {"id": "note", "kind": "footnote", "label": "Shared reference note", "optional": true,
+     "links": [{"action": "open", "target": "note-2", "return_to": "note"}]},
+    {"id": "note-2", "kind": "footnote", "label": "Nested reference note", "optional": true},
+    {"id": "branch-a", "kind": "text", "label": "Alpha derivation", "optional": true},
+    {"id": "branch-b", "kind": "text", "label": "Beta derivation", "optional": true}
+  ]}]
