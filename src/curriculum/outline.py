@@ -68,6 +68,20 @@ def release(db, course_id, year):
         "DO UPDATE SET event_id=excluded.event_id,decision=excluded.decision,reason=excluded.reason",
         (course_id, year, chosen, decision, reason),
     )
+    if decision == "published":
+        # An outline version change only re-opens the marking batches of this
+        # course/year. Sign-offs recorded against earlier outline versions stay
+        # in batch_review_history untouched, so every old decision is traceable.
+        from . import assessment
+
+        objective_ids = {x["id"] for x in current(db, course_id, year)["objectives"]}
+        for row in rows(
+            db,
+            "SELECT DISTINCT objective_id FROM assessment_evidence WHERE course_id=? AND year=?",
+            (course_id, year),
+        ):
+            if row["objective_id"] in objective_ids:
+                assessment._reevaluate_if_signed(db, course_id, year, row["objective_id"])
     return current(db, course_id, year)
 
 
