@@ -1,0 +1,40 @@
+{
+  "plans": [
+    {
+      "event_id": "trial-plan-1",
+      "course_id": "C3",
+      "year": 2026,
+      "form_id": "teaching",
+      "plan_id": "wording-2026",
+      "plan_version": 1,
+      "randomization_unit": "group",
+      "alpha": 0.05,
+      "two_sided": true,
+      "arms": ["A", "B"],
+      "arm_versions": {"A": 1, "B": 2},
+      "event_time": "2026-03-01T00:00:00Z",
+      "strata": [
+        {
+          "stratum_id": "day",
+          "quota": {"A": 2, "B": 2},
+          "units": [
+            {"cluster_id": "g1", "arm": "A", "tokens": ["t1", "t2"]},
+            {"cluster_id": "g2", "arm": "A", "tokens": ["t3", "t4"]},
+            {"cluster_id": "g3", "arm": "B", "tokens": ["t5", "t6"]},
+            {"cluster_id": "g4", "arm": "B", "tokens": ["t7", "t8"]}
+          ]
+        }
+      ]
+    }
+  ],
+  "deliveries": [
+    {"event_id": "del-t1", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t1", "arm": "A", "form_version": 1, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"},
+    {"event_id": "del-t2", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t2", "arm": "A", "form_version": 1, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"},
+    {"event_id": "del-t3", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t3", "arm": "A", "form_version": 1, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"},
+    {"event_id": "del-t4", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t4", "arm": "A", "form_version": 1, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"},
+    {"event_id": "del-t5", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t5", "arm": "B", "form_version": 2, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"},
+    {"event_id": "del-t6", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t6", "arm": "B", "form_version": 2, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"},
+    {"event_id": "del-t7", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t7", "arm": "B", "form_version": 2, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"},
+    {"event_id": "del-t8", "course_id": "C3", "year": 2026, "form_id": "teaching", "response_token": "t8", "arm": "B", "form_version": 2, "kind": "initial", "event_time": "2026-03-03T00:00:00Z"}
+  ]
+}
