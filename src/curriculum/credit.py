@@ -6,6 +6,7 @@ from . import catalog
 
 def ingest(db,events):
     count=0
+    students=set()
     with db:
         for e in events:
             op=e['op']
@@ -14,18 +15,24 @@ def ingest(db,events):
                     db.execute('INSERT INTO transcript_evidence VALUES (?,?,?,?,?,?,?,?)',
                                (e['event_id'],e['student_id'],e['source_course'],e['year'],e['credits'],e['grade'],e['issuer'],e['status']))
                     count+=1
+                    students.add(e['student_id'])
             elif op=='agreement':
                 if e['category'] not in ('required','elective'):raise ValueError('unknown credit category')
                 if record(db,e,'agreement',e['target_course']):
                     db.execute('INSERT INTO equivalence_agreement VALUES (?,?,?,?,?,?,?)',
                                (e['event_id'],e['source_course'],e['target_course'],e['valid_from'],e['valid_until'],e['min_credits'],e['category']))
                     count+=1
+                    students|={r['student_id'] for r in rows(db,'SELECT DISTINCT student_id FROM transcript_evidence WHERE source_course=?',(e['source_course'],))}
             else:raise ValueError('credit input must be transcript or agreement')
         # Recompute affected awards after a revocation or a new agreement.
         for r in rows(db,'SELECT DISTINCT student_id,year FROM transcript_evidence'):
             for target in rows(db,'SELECT DISTINCT target_course FROM equivalence_agreement'):
                 award(db,r['student_id'],target['target_course'],r['year'])
-    return {'imported':count,'awards':rows(db,'SELECT * FROM credit_award')}
+        # A revoked or newly recognized equivalence reopens the graduation term
+        # of the affected students, not just the credit_award rows.
+        from . import plan
+        plans=plan.reverify(db,students=students,cause='credit') if students else []
+    return {'imported':count,'awards':rows(db,'SELECT * FROM credit_award'),'plans':[plan.summary(p) for p in plans]}
 
 
 def latest_transcripts(db,student_id):

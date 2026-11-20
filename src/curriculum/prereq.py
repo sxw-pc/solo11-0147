@@ -7,14 +7,21 @@ from . import catalog
 
 def ingest(db,events):
     count=0
+    changed=set()
     with db:
         for e in events:
             if e.get('op')!='rule':raise ValueError('prereq input must be rule')
             if record(db,e,'prereq_rule',e['target_course']):
                 db.execute('INSERT INTO prereq_rule VALUES (?,?,?,?)',(e['event_id'],e['target_course'],e['year'],json.dumps(e['rule'],sort_keys=True)))
                 count+=1
+                changed.add(e['target_course'])
         for year in sorted({r['year'] for r in rows(db,'SELECT DISTINCT year FROM prereq_rule')}):publish(db,year)
-    return {'imported':count,'graphs':rows(db,'SELECT * FROM graph_revision')}
+        # A changed any/all rule reopens the graduation term of every student
+        # whose program depends on the touched course, not just qualification_case.
+        from . import plan
+        programs=plan.programs_for_courses(db,plan.dependents(db,changed)|changed) if changed else set()
+        plans=plan.reverify(db,programs=programs,cause='prereq') if programs else []
+    return {'imported':count,'graphs':rows(db,'SELECT * FROM graph_revision'),'plans':[plan.summary(p) for p in plans]}
 
 
 def latest_rules(db,year):

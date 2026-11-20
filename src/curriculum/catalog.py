@@ -5,6 +5,7 @@ from .store import rows
 
 def ingest(db,events):
     count=0
+    changed=set()
     with db:
         for e in events:
             op=e['op']
@@ -19,10 +20,15 @@ def ingest(db,events):
                     db.execute('INSERT INTO course_revision VALUES (?,?,?,?,?,?,?,?)',
                                (e['event_id'],e['course_id'],e['department'],e['source_id'],e['year'],e['version'],e['credits'],e['status']))
                     count+=1
+                    changed.add(e['course_id'])
             else:raise ValueError(f'unknown catalog op {op}')
         for r in rows(db,'SELECT DISTINCT course_id,year FROM course_revision'):
             release(db,r['course_id'],r['year'])
-    return {'imported':count,'releases':rows(db,'SELECT * FROM catalog_release')}
+        # A revised credit or status reopens term plans that schedule the course.
+        from . import plan
+        programs=plan.programs_for_courses(db,plan.dependents(db,changed)|changed) if changed else set()
+        plans=plan.reverify(db,programs=programs,cause='catalog') if programs else []
+    return {'imported':count,'releases':rows(db,'SELECT * FROM catalog_release'),'plans':[plan.summary(p) for p in plans]}
 
 
 def release(db,course_id,year):
