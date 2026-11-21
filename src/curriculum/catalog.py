@@ -36,6 +36,8 @@ def release(db,course_id,year):
             chosen=top[0]['event_id'];decision='stopped' if top[0]['status']=='stopped' else 'published';reason='authorized_latest'
     db.execute('INSERT INTO catalog_release VALUES (?,?,?,?,?) ON CONFLICT(course_id,year) DO UPDATE SET event_id=excluded.event_id,decision=excluded.decision,reason=excluded.reason',
                (course_id,year,chosen,decision,reason))
+    db.execute('INSERT INTO catalog_release_history(course_id,year,event_id,decision,reason) VALUES (?,?,?,?,?)',
+               (course_id,year,chosen,decision,reason))
     return {'course_id':course_id,'year':year,'decision':decision,'reason':reason,'event_id':chosen}
 
 
